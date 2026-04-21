@@ -99,16 +99,27 @@ wandesk admin project for inspiration if you want to build one.)
 
 ## How your Roam client connects
 
-In your Roam (v4) installation, point the desktop client at the relay:
+Roam v4 ships a relay dialer at [`server/relay/`](../server/relay). Point it
+at your Worker with three env vars:
 
 ```bash
 export ROAM_RELAY_WS="wss://relay.<your-domain>/ws/device"
-export ROAM_RELAY_TOKEN="your-secret-token"
+export ROAM_RELAY_TOKEN="your-secret-token"        # plain; matched against D1 via SHA-256
+export ROAM_DEVICE_ID="dev-1"                       # matches the row you inserted in D1
 npm start
 ```
 
-> **Note**: The Roam v4 client doesn't ship a relay dialer yet. The v2 codebase
-> ([`ROAM-v2.zip`](../ROAM-v2.zip)) has one you can port. Contributions welcome.
+`npm start` auto-spawns a `[relay]` process alongside `[main]` and `[apps]`
+whenever all three env vars are set. Each process's logs get its own prefix.
+The relay:
+
+- dials `wss://relay.<domain>/ws/device?device_id=<id>` with `Authorization: Bearer <token>`
+- holds the connection open with exponential-backoff auto-reconnect
+- translates `proxy_request` → `fetch('http://127.0.0.1:9505' + path)` → `proxy_response`
+- tunnels `ws_open` / `ws_message` / `ws_close` frames to/from local WebSockets
+
+Unset the three env vars to turn relay off — `npm start` reverts to just
+`main + apps`.
 
 ---
 

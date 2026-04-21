@@ -100,7 +100,7 @@ npm run build        # 构建前端到 gui/dist
 npm start            # 起 main + apps 两个进程
 ```
 
-打开 <http://localhost:9506>,右上角齿轮配模型,开始用。
+打开 <http://localhost:9505>,右上角齿轮配模型,开始用。
 
 - `npm run start:main` — 只起内核进程
 - `npm run start:apps` — 只起应用进程
@@ -114,7 +114,7 @@ v4 默认只绑 `127.0.0.1`。想远程用,挑一个隧道:
 
 ### ngrok(最省事)
 ```bash
-ngrok http 9506
+ngrok http 9505
 ```
 
 ### Cloudflare Tunnel(长期域名)
@@ -122,19 +122,34 @@ ngrok http 9506
 brew install cloudflared
 cloudflared tunnel create roam
 cloudflared tunnel route dns roam roam.你的域.com
-cloudflared tunnel --url http://localhost:9506 run roam
+cloudflared tunnel --url http://localhost:9505 run roam
 ```
 配合 Cloudflare Zero Trust Access 锁定访问。
 
 ### Tailscale Serve
 ```bash
-tailscale serve --bg 9506
+tailscale serve --bg 9505
 ```
 只有 tailnet 成员可访问。
 
 ### 自建 Cloudflare Worker 中继 (进阶)
 
-如果你有自己的域名 + Cloudflare 账号,仓库里 [`roam-relay-worker/`](./roam-relay-worker) 提供了一个可部署的 Worker,给每台设备一个固定的 `https://<slug>.roam.<your-domain>/`,家里电脑只需要 *outbound* WebSocket,不用对外开端口。详见 [roam-relay-worker/README.md](./roam-relay-worker/README.md)。
+如果你有自己的域名 + Cloudflare 账号,仓库里 [`roam-relay-worker/`](./roam-relay-worker) 提供了一个可部署的 Worker,给每台设备一个固定的 `https://<slug>.roam.<your-domain>/`,家里电脑只需要 *outbound* WebSocket,不用对外开端口。
+
+两端都在本仓库里:
+- **Worker 端** (公网): [`roam-relay-worker/`](./roam-relay-worker) — `wrangler deploy` 自己的 CF 账号
+- **本地端** (家里机器): [`server/relay/`](./server/relay) — 第三个进程, 拨 Worker 挂住, 把请求转发回 localhost:9505
+
+启动时只要设置三个环境变量,`npm start` 会自动多起一个 `relay` 子进程:
+
+```bash
+export ROAM_RELAY_WS="wss://relay.你的域名/ws/device"
+export ROAM_RELAY_TOKEN="你的设备 token"
+export ROAM_DEVICE_ID="你在 D1 里注册的 device_id"
+npm start   # 自动 spawn main + apps + relay 三个进程
+```
+
+不设这三个环境变量就没有 relay 进程,和直接 ngrok / Tunnel 用法一致。
 
 (这是 v2 架构的简化重生版 —— 只是它不再是默认,也不强制。想要就装。)
 
@@ -146,16 +161,21 @@ AIOS 是双进程内核,Roam 继承了这套:
 
 ```
 ┌─────────────────────────────────────┐
-│ main 进程 (9506) — 稳定内核         │
+│ main 进程 (9505) — 稳定内核         │
 │ · HTTP + WebSocket                  │
 │ · Agent + LLM 流式                  │
 │ · 系统服务: pty / 文件 / 任务管理    │
 │ · 对话连接不中断                    │
 ├─────────────────────────────────────┤
-│ apps 进程 (9507) — 应用运行时       │
+│ apps 进程 (9506) — 应用运行时       │
 │ · 每个应用独立模块 + 独立 DB        │
 │ · 可独立热重启,不影响 main          │
 │ · 为"agent 现场生成新应用"预留      │
+├─────────────────────────────────────┤
+│ relay 进程 (可选) — 对外长连接      │
+│ · 仅 outbound, 无监听端口           │
+│ · 拨 Worker 挂住, 转发请求到 main   │
+│ · 不设 ROAM_RELAY_* 则不启动        │
 └─────────────────────────────────────┘
 ```
 
@@ -181,6 +201,10 @@ roam-v4/
 │   │   ├── index.js
 │   │   ├── registry.js
 │   │   └── app_shared/       # 给应用派发 AI 任务的工具
+│   ├── relay/                # 可选 relay 拨号进程
+│   │   ├── index.js          # 入口: 读 env, 启动
+│   │   ├── client.js         # 拨 Worker + 认证 + 断线重连
+│   │   └── forwarder.js      # proxy_request / ws_* 帧处理
 │   └── shared/               # main + apps 共用
 ├── gui/
 │   └── src/

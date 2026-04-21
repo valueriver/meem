@@ -103,7 +103,7 @@ const startDetachedNode = (entry) => {
 const restartAppsProcess = async () => {
   await probeProcess(APPS_ENTRY, 9511, "/apps/health");
   try {
-    execSync("lsof -ti:9501 | xargs kill 2>/dev/null || true", { stdio: "pipe" });
+    execSync("lsof -ti:9506 | xargs kill 2>/dev/null || true", { stdio: "pipe" });
   } catch {
   }
   startDetachedNode(APPS_ENTRY);

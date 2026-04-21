@@ -1,4 +1,7 @@
 {
   "system_boot_title": "系统启动",
-  "system_boot_content": "AIOS 完成初始化。这是系统记录的第一条，之后发生的一切——对话、任务、记忆——都会在此沉淀。"
+  "system_boot_content": "AIOS 完成初始化。这是系统记录的第一条，之后发生的一切——对话、任务、记忆——都会在此沉淀。",
+  "memory_seed_app_creation_guide_title": "应用开发指导",
+  "memory_seed_app_creation_guide_description": "AIOS 应用结构、API 规则、数据库写法、前端放置与 reload 约定",
+  "memory_seed_app_creation_guide_content": "# 应用开发指导\n\n这是 AIOS 新建和修改应用的数据库内置系统记忆版本。\n\n## 基本原则\n\n- 应用后端代码放在 `server/apps/<appname>/`\n- 应用前端代码放在 `gui/src/apps/<appname>/`\n- 应用说明文档放在 `language/<lang>/apps/<appname>/APP.md`\n- 不要把应用服务代码写到顶层 `apps/` 目录\n\n## 后端约定\n\n- 每个应用至少包含 `index.js`、`api/index.js`、`service/`、`repository/`\n- `index.js` 默认导出对象，包含 `name`、`match`、`handleApi`\n- 新应用必须注册到 `server/apps/registry.js`\n- 改完 `server/apps/` 下代码后，需要触发 reload 才会生效\n\n## API 约定\n\n- 应用 API 统一走 `/apps/<appname>/<action>`\n- 查询类接口用 `GET`\n- 变更类接口用 `POST + JSON body`\n- 读取 body 使用 `readBody(req)`\n- 返回 JSON 使用 `json(res, data, status?)`\n- 未命中路径时返回 `false`\n\n## 数据库约定\n\n- 应用数据库通过 `createAppDb()` 创建\n- 建表放在 `repository/init.js`\n- SQL 操作拆到各自的 `repository/<action>.js`\n- 不做兼容旧结构的迁移逻辑；需要改表时，直接按当前最终结构重建\n\n## 前端约定\n\n- 应用界面放在 `gui/src/apps/<appname>/`\n- 参考现有应用的结构，不要照搬 Express、Electron 或随意自造接口风格\n- 改了 `gui/` 下代码后，reload 时要带上 `build: true`\n\n## 重载约定\n\n- 改 `server/apps/`：`restartApps: true`\n- 改 `server/main/`：`restartServer: true`\n- 改 `gui/`：`build: true`\n\n## 补充\n\n- 系统级应用 `chat`、`settings`、`tasks` 是特例，不在 `server/apps/`\n- 长期行为变更优先落到代码，不做只靠临时命令的补丁"
 }

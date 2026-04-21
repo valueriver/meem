@@ -40,6 +40,9 @@ const normalizeAgentMessages = (messages = []) => {
     if (role === "assistant" && Array.isArray(item.tool_calls)) {
       msg.content = item.content == null ? null : String(item.content);
       msg.tool_calls = item.tool_calls;
+      if (typeof item.reasoning_content === "string" && item.reasoning_content.trim()) {
+        msg.reasoning_content = item.reasoning_content;
+      }
     } else {
       msg.content = item.content == null ? "" : String(item.content);
     }

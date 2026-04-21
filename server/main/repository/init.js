@@ -1,5 +1,15 @@
 import { db } from "./client.js";
-import { getSystemMemorySeeds } from "./memorySeeds.js";
+
+const SYSTEM_MEMORY_SEEDS = [
+  {
+    title: "__T_MEMORY_SEED_APP_CREATION_GUIDE_TITLE__",
+    description: "__T_MEMORY_SEED_APP_CREATION_GUIDE_DESCRIPTION__",
+    content: "__T_MEMORY_SEED_APP_CREATION_GUIDE_CONTENT__",
+    creator: "system",
+    pinned: 0,
+    enabled: 1
+  }
+];
 
 const createTables = () => {
   db.exec(`
@@ -60,15 +70,7 @@ const seedMemoriesIfEmpty = () => {
   const count = db.prepare("SELECT COUNT(*) as c FROM memories").get().c;
   if (count !== 0) return;
   try {
-    const locale = (() => {
-      try {
-        const row = db.prepare("SELECT value FROM settings WHERE key = ?").get("language");
-        return String(row?.value || "zh").trim() || "zh";
-      } catch {
-        return "zh";
-      }
-    })();
-    for (const item of getSystemMemorySeeds(locale)) {
+    for (const item of SYSTEM_MEMORY_SEEDS) {
       db.prepare(
         "INSERT INTO memories (title, description, content, creator, pinned, enabled) VALUES (?, ?, ?, ?, ?, ?)"
       ).run(
@@ -80,7 +82,9 @@ const seedMemoriesIfEmpty = () => {
         item.enabled === 0 ? 0 : 1
       );
     }
-  } catch {}
+  } catch (error) {
+    console.error("[memory-seeds] failed to seed system memories:", error);
+  }
 };
 
 const initDatabase = () => {

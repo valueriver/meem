@@ -14,9 +14,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/ws": { target: "ws://localhost:9500", ws: true },
-      "/api": { target: "http://localhost:9500" },
-      "/apps": { target: "http://localhost:9500" }
+      "/ws": { target: "ws://localhost:9505", ws: true },
+      "/api": { target: "http://localhost:9505" },
+      "/apps": { target: "http://localhost:9505" }
     }
   },
   build: {
