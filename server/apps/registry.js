@@ -1,0 +1,5 @@
+const appLoaders = [];
+
+export {
+  appLoaders
+};

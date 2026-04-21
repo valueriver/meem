@@ -1,0 +1,6 @@
+node_modules/
+gui/dist/
+.aios/
+.DS_Store
+*.log
+/database/
