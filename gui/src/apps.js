@@ -19,6 +19,43 @@ const apps = [
     load: () => import('./apps/files/index.vue')
   },
   {
+    id: 'tasks',
+    name: 'Tasks',
+    icon: '\u26A1',
+    load: () => import('./apps/tasks/index.vue'),
+    intent: () => import('./apps/tasks/intent.js')
+  },
+  {
+    id: 'memory',
+    name: 'Memory',
+    icon: '\u{1F4AD}',
+    load: () => import('./apps/memory/index.vue')
+  },
+  {
+    id: 'notebook',
+    name: 'Notebook',
+    icon: '\u{1F4D3}',
+    load: () => import('./apps/notebook/index.vue')
+  },
+  {
+    id: 'code-viewer',
+    name: 'Code Viewer',
+    icon: '\u{1F5A5}',
+    load: () => import('./apps/code-viewer/index.vue')
+  },
+  {
+    id: 'codex',
+    name: 'Codex',
+    icon: '\u{1F4BB}',
+    load: () => import('./apps/codex/index.vue')
+  },
+  {
+    id: 'claude-code',
+    name: 'Claude Code',
+    icon: '\u{1F9E0}',
+    load: () => import('./apps/claude-code/index.vue')
+  },
+  {
     id: 'settings',
     name: 'Settings',
     icon: '\u2699\uFE0F',

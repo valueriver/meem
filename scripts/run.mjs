@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// 一条命令同时起 main + apps 两个进程。Ctrl+C 全部关掉。
+// 一条命令同时起 agent + main + apps 三个进程。Ctrl+C 全部关掉。
 
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { freeRoamPorts } from "./ports.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = dirname(__dirname);
@@ -49,11 +50,17 @@ const shutdown = (code = 0) => {
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 
-start("main", [join(ROOT, "server/main/index.js"), "--port=9507"], {
-  ROAM_APPS_PORT: "9508"
+await freeRoamPorts();
+
+start("agent", [join(ROOT, "server/agent/index.js")], {
+  ROAM_AGENT_PORT: "9507"
 });
-start("apps", [join(ROOT, "server/apps/index.js"), "--port=9508"], {
-  ROAM_MAIN_PORT: "9507"
+start("main", [join(ROOT, "server/main/index.js"), "--port=9508"], {
+  ROAM_AGENT_PORT: "9507",
+  ROAM_APPS_PORT: "9509"
+});
+start("apps", [join(ROOT, "server/apps/index.js"), "--port=9509"], {
+  ROAM_MAIN_PORT: "9508"
 });
 
 let relayConfig = {};
@@ -69,6 +76,6 @@ const relayReady =
 
 if (relayReady) {
   start("relay", [join(ROOT, "server/relay/index.js")], {
-    ROAM_MAIN_PORT: "9507"
+    ROAM_MAIN_PORT: "9508"
   });
 }

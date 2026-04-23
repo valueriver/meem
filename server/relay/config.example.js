@@ -12,8 +12,8 @@ export default {
   // 你在 D1 devices 表里注册的 device_id
   deviceId: "dev-1",
 
-  // (可选) 转发目标 main 端口, 默认 9507
-  // mainPort: 9507,
+  // (可选) 转发目标 main 端口, 默认 9508
+  // mainPort: 9508,
 
   // (可选) 转发目标 main 主机, 默认 127.0.0.1
   // mainHost: "127.0.0.1",

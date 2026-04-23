@@ -71,7 +71,7 @@ export function buildRelayUrls(env, slug) {
   const publicRootHost = normalizeHost(env.PUBLIC_ROOT_HOST || 'roam.example.com');
   return {
     wsUrl: `wss://${deviceHost}/ws/device`,
-    publicUrl: `https://${slug}.${publicRootHost}/`
+    publicUrl: slug ? `https://${slug}.${publicRootHost}/` : `https://${publicRootHost}/`
   };
 }
 
@@ -92,7 +92,30 @@ function makeProxyRequest(request, extraHeaders = {}) {
   return new Request(request, { headers });
 }
 
+function getStaticDevice(env) {
+  const deviceId = sanitizeDeviceId(env.DEVICE_ID);
+  const token = String(env.DEVICE_TOKEN || '').trim();
+  const slug = sanitizeSlug(env.DEVICE_SLUG) || 'home';
+  if (!deviceId) return null;
+  return {
+    device_id: deviceId,
+    slug,
+    token,
+    mode: 'static'
+  };
+}
+
 async function authorizeBrowserAccess(env, slug) {
+  const staticDevice = getStaticDevice(env);
+  if (staticDevice) {
+    if (slug && slug !== staticDevice.slug) {
+      return json({ success: false, message: 'device not found' }, 404);
+    }
+    return { device: staticDevice };
+  }
+  if (!env.DB) {
+    return json({ success: false, message: 'device registry unavailable' }, 500);
+  }
   const device = await getRemoteDeviceBySlug(env.DB, slug);
   if (!device) {
     return json({ success: false, message: 'device not found' }, 404);
@@ -108,8 +131,27 @@ async function authorizeDeviceSocket(request, env) {
   const token = bearer || new URL(request.url).searchParams.get('token') || '';
   const deviceId = sanitizeDeviceId(new URL(request.url).searchParams.get('device_id'));
 
-  if (!token || !deviceId) {
-    return json({ success: false, message: 'missing token or device_id' }, 400);
+  if (!deviceId) {
+    return json({ success: false, message: 'missing device_id' }, 400);
+  }
+
+  const staticDevice = getStaticDevice(env);
+  if (staticDevice) {
+    if (staticDevice.device_id !== deviceId) {
+      return json({ success: false, message: 'device mismatch' }, 403);
+    }
+    if (staticDevice.token && staticDevice.token !== token) {
+      return json({ success: false, message: 'unauthorized' }, 401);
+    }
+    return staticDevice;
+  }
+
+  if (!token) {
+    return json({ success: false, message: 'missing token' }, 400);
+  }
+
+  if (!env.DB) {
+    return json({ success: false, message: 'device registry unavailable' }, 500);
   }
 
   const device = await getRemoteDeviceByTokenHash(env.DB, await hashToken(token));
@@ -131,15 +173,17 @@ export async function handleRelayRequest(request, env) {
   const host = normalizeHost(request.headers.get('host') || url.host);
   const deviceHost = normalizeHost(env.DEVICE_HOST || 'relay.example.com');
   const publicRootHost = normalizeHost(env.PUBLIC_ROOT_HOST || 'roam.example.com');
+  const staticDevice = getStaticDevice(env);
 
   if (host === deviceHost) {
     if (url.pathname === '/' || url.pathname === '') {
       return json({
         success: true,
         service: 'roam-relay',
+        mode: staticDevice ? 'single-device' : 'multi-device',
         device_host: deviceHost,
         public_root_host: publicRootHost,
-        routes: ['/healthz', '/ws/device', `https://{slug}.${publicRootHost}/...`]
+        routes: ['/healthz', '/ws/device', staticDevice ? `https://${publicRootHost}/...` : `https://{slug}.${publicRootHost}/...`]
       });
     }
 
@@ -147,6 +191,7 @@ export async function handleRelayRequest(request, env) {
       return json({
         success: true,
         service: 'roam-relay',
+        mode: staticDevice ? 'single-device' : 'multi-device',
         device_host: deviceHost,
         public_root_host: publicRootHost,
         time: new Date().toISOString()
@@ -172,11 +217,12 @@ export async function handleRelayRequest(request, env) {
   }
 
   const slug = subdomainFromHost(host, publicRootHost);
-  if (!slug) {
+  const isSingleDevicePublicHost = Boolean(staticDevice && host === publicRootHost);
+  if (!slug && !isSingleDevicePublicHost) {
     return null;
   }
 
-  const auth = await authorizeBrowserAccess(env, slug);
+  const auth = await authorizeBrowserAccess(env, slug || staticDevice?.slug || null);
   if (auth instanceof Response) return auth;
 
   if (isWebSocketUpgrade(request)) {

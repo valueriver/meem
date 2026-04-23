@@ -15,8 +15,19 @@ export const useWsStore = defineStore('ws', () => {
     const locked = ref(false);
     const email = ref(null);
     const via = ref(null);
+    const connection = ref(null);
+    const relay = ref(null);
+    const remoteConfig = ref({
+        wsUrl: '',
+        token: '',
+        deviceId: '',
+        mainPort: '9507',
+        mainHost: '127.0.0.1',
+        source: 'none'
+    });
 
     const authError = ref('');
+    const relayPending = ref('idle');      // 'idle' | 'starting' | 'stopping' | 'saving'
     let challengeNonceId = '';
     let challengeNonce = '';
 
@@ -34,13 +45,76 @@ export const useWsStore = defineStore('ws', () => {
             locked.value = Boolean(me.locked);
             email.value = me.email || null;
             via.value = me.via || null;
+            connection.value = me.connection || null;
+            relay.value = me.relay || null;
             state.value = 'connected';
             statusText.value = authenticated.value ? '已连接' : '需要认证';
             return me;
         } catch (err) {
             state.value = 'offline';
             statusText.value = '连接失败';
+            connection.value = null;
+            relay.value = null;
             throw err;
+        }
+    }
+
+    async function refreshRemote() {
+        const data = await api.get('/api/system/remote');
+        relay.value = data.relay || null;
+        return data.relay || null;
+    }
+
+    async function fetchRemoteConfig() {
+        const data = await api.get('/api/system/remote/config');
+        remoteConfig.value = data.config || remoteConfig.value;
+        relay.value = data.relay || relay.value;
+        return data.config || null;
+    }
+
+    async function saveRemoteConfig(nextConfig) {
+        relayPending.value = 'saving';
+        try {
+            const data = await api.post('/api/system/remote/config', nextConfig);
+            remoteConfig.value = data.config || remoteConfig.value;
+            relay.value = data.relay || relay.value;
+            return data.config || null;
+        } finally {
+            relayPending.value = 'idle';
+        }
+    }
+
+    async function pollRelayUntil(predicate, { timeoutMs = 8000, intervalMs = 800 } = {}) {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            if (predicate(relay.value)) return true;
+            await new Promise((r) => setTimeout(r, intervalMs));
+            try { await refreshRemote(); } catch {}
+        }
+        return predicate(relay.value);
+    }
+
+    async function startRemote() {
+        relayPending.value = 'starting';
+        try {
+            const data = await api.post('/api/system/remote/start');
+            relay.value = data.relay || relay.value;
+            if (!relay.value?.running) await pollRelayUntil((r) => r?.running === true);
+            return relay.value;
+        } finally {
+            relayPending.value = 'idle';
+        }
+    }
+
+    async function stopRemote() {
+        relayPending.value = 'stopping';
+        try {
+            const data = await api.post('/api/system/remote/stop');
+            relay.value = data.relay || relay.value;
+            if (relay.value?.running) await pollRelayUntil((r) => r?.running === false);
+            return relay.value;
+        } finally {
+            relayPending.value = 'idle';
         }
     }
 
@@ -118,11 +192,11 @@ export const useWsStore = defineStore('ws', () => {
 
     return {
         state, statusText,
-        authenticated, requiresPassword, locked, email, via,
-        authError,
+        authenticated, requiresPassword, locked, email, via, connection, relay, remoteConfig,
+        authError, relayPending,
         invalid, superseded, authClosed,
         showActions,
-        init, refreshMe, requestChallenge, submitPassword,
+        init, refreshMe, refreshRemote, fetchRemoteConfig, saveRemoteConfig, startRemote, stopRemote, requestChallenge, submitPassword,
         sendMsg, onMessage,
     };
 });

@@ -17,6 +17,11 @@
   "vars": {
     "DEVICE_HOST": "relay.example.com",
     "PUBLIC_ROOT_HOST": "roam.example.com",
+    // Optional single-device mode:
+    // set DEVICE_ID here, DEVICE_SLUG optionally, and put DEVICE_TOKEN as a secret.
+    // Then you can remove the D1 section below and use https://roam.example.com/ directly.
+    // "DEVICE_ID": "dev-1",
+    // "DEVICE_SLUG": "home",
     "HTTP_TIMEOUT_MS": "30000"
   },
 

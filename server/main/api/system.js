@@ -1,9 +1,12 @@
 import { readBody } from "../../shared/http/readBody.js";
 import { json } from "../../shared/http/json.js";
+import { spawn } from "node:child_process";
 import { requestReload, runReload } from "../service/system/reload.js";
 import { runReloadTest } from "../service/system/test.js";
 import { hasConfiguredModelSettings } from "../service/settings/get.js";
-import { shell } from "../agent/functions.js";
+import { requestAgentJson } from "../clients/agent.js";
+import { getConnectionInfo, isLoopbackAddress } from "../system/connection.js";
+import { getRelayConfig, getRelayStatus, saveRelayConfig, startRelay, stopRelay } from "../service/system/relay.js";
 
 const logReloadRequest = (req, body, stage, extra = {}) => {
   console.log("[reload.request]", JSON.stringify({
@@ -18,19 +21,58 @@ const logReloadRequest = (req, body, stage, extra = {}) => {
   }));
 };
 
-const isLocalRequest = (req) => {
-  const address = String(req.socket?.remoteAddress || "").trim();
-  return (
-    address === "127.0.0.1" ||
-    address === "::1" ||
-    address === "::ffff:127.0.0.1" ||
-    address === ""
-  );
+const isLocalRequest = (req) => isLoopbackAddress(req.socket?.remoteAddress);
+
+const hasConfiguredAgentSettings = async () => {
+  try {
+    const data = await requestAgentJson("/api/settings");
+    const settings = data.settings || {};
+    return Boolean(settings.apiUrl && settings.apiKey && settings.model);
+  } catch {
+    return hasConfiguredModelSettings();
+  }
 };
+
+const runLocalCommand = ({ command, cwd }) => new Promise((resolve) => {
+  const child = spawn(process.env.SHELL || "/bin/bash", ["-lc", command], {
+    cwd: String(cwd || "").trim() || process.cwd()
+  });
+  let output = "";
+  child.stdout.on("data", (chunk) => { output += chunk.toString(); });
+  child.stderr.on("data", (chunk) => { output += chunk.toString(); });
+  child.on("error", (error) => resolve(`error: ${error.message}`));
+  child.on("close", (code, signal) => {
+    resolve(output + (code === 0 ? "" : `\n[exit code=${code}, signal=${signal || ""}]`));
+  });
+});
 
 const handleSystemApi = async (req, res, path) => {
   if (path === "/api/system/setup" && req.method === "GET") {
-    return json(res, { success: true, initialized: hasConfiguredModelSettings() });
+    return json(res, { success: true, initialized: await hasConfiguredAgentSettings() });
+  }
+  if (path === "/api/system/connection" && req.method === "GET") {
+    return json(res, { success: true, connection: getConnectionInfo(req), relay: await getRelayStatus() });
+  }
+  if (path === "/api/system/remote" && req.method === "GET") {
+    return json(res, { success: true, relay: await getRelayStatus() });
+  }
+  if (path === "/api/system/remote/config" && req.method === "GET") {
+    return json(res, { success: true, config: await getRelayConfig(), relay: await getRelayStatus() });
+  }
+  if (path === "/api/system/remote/config" && req.method === "POST") {
+    const body = await readBody(req);
+    const config = await saveRelayConfig(body);
+    return json(res, { success: true, config, relay: await getRelayStatus() });
+  }
+  if (path === "/api/system/remote/start" && req.method === "POST") {
+    try {
+      return json(res, { success: true, relay: await startRelay() });
+    } catch (e) {
+      return json(res, { success: false, message: e instanceof Error ? e.message : "Relay start failed" }, 400);
+    }
+  }
+  if (path === "/api/system/remote/stop" && req.method === "POST") {
+    return json(res, { success: true, relay: await stopRelay() });
   }
   if (path === "/api/system/debug/exec" && req.method === "POST") {
     if (!isLocalRequest(req)) {
@@ -41,10 +83,9 @@ const handleSystemApi = async (req, res, path) => {
     if (!command) {
       return json(res, { success: false, message: "Missing command" }, 400);
     }
-    const output = await shell({
+    const output = await runLocalCommand({
       command,
-      cwd: body.cwd || "",
-      reason: body.reason || "Debug API command"
+      cwd: body.cwd || ""
     });
     return json(res, {
       success: true,

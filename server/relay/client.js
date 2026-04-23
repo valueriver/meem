@@ -17,8 +17,12 @@ export class RelayClient {
   connect() {
     if (this.closed) return;
     const url = `${this.wsUrl}?device_id=${encodeURIComponent(this.deviceId)}`;
+    const headers = {};
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
     this.ws = new WebSocket(url, {
-      headers: { Authorization: `Bearer ${this.token}` }
+      headers
     });
 
     this.ws.on("open", () => {

@@ -27,7 +27,37 @@ If ngrok/Tunnel/Tailscale is fine for you, skip this whole directory.
 
 - Cloudflare account with a domain on the account
 - `wrangler` CLI (comes via `npm install` in this dir)
-- A device token you generate yourself (plain string, hashed server-side)
+- A device token you generate yourself if you want auth enabled
+
+## Fast Path: single-device mode, no D1
+
+If you only need **one Roam machine**, you do not need D1 at all.
+
+Deploy one Worker and set:
+
+- `DEVICE_HOST`
+- `PUBLIC_ROOT_HOST`
+- `DEVICE_ID`
+- `DEVICE_SLUG` (optional, defaults to `home`)
+- `DEVICE_TOKEN` as a Worker secret (optional)
+
+Then:
+
+```bash
+cd roam-relay-worker
+npm install
+npx wrangler login
+npx wrangler deploy
+```
+
+In this mode:
+
+- the device connects with `wss://relay.<your-domain>/ws/device`
+- the public URL is `https://roam.<your-domain>/` if you use `PUBLIC_ROOT_HOST=roam.<your-domain>`
+- no D1 setup or device table is required
+- if you omit `DEVICE_TOKEN`, forwarding works without token auth and only checks `DEVICE_ID`
+
+If you want **multiple devices / per-device subdomains**, keep using the D1 mode below.
 
 ## Deploy
 
@@ -106,19 +136,20 @@ three values:
 ```js
 export default {
   wsUrl: "wss://relay.<your-domain>/ws/device",
-  token: "your-secret-token",          // plain; matched against D1 via SHA-256
-  deviceId: "dev-1",                    // matches the row you inserted in D1
+  deviceId: "dev-1",
+  // token: "your-secret-token", // optional
 };
 ```
 
-Then `npm start`. (Env vars `ROAM_RELAY_WS` / `ROAM_RELAY_TOKEN` /
-`ROAM_DEVICE_ID` also work if you prefer not to touch files.)
+Then `npm start`. (Env vars `ROAM_RELAY_WS` / `ROAM_DEVICE_ID` also work if
+you prefer not to touch files. `ROAM_RELAY_TOKEN` is optional.)
 
 `npm start` auto-spawns a `[relay]` process alongside `[main]` and `[apps]`
-whenever all three env vars are set. Each process's logs get its own prefix.
+whenever `wsUrl + deviceId` are present. Each process's logs get its own prefix.
 The relay:
 
-- dials `wss://relay.<domain>/ws/device?device_id=<id>` with `Authorization: Bearer <token>`
+- dials `wss://relay.<domain>/ws/device?device_id=<id>`
+- adds `Authorization: Bearer <token>` only when token is configured
 - holds the connection open with exponential-backoff auto-reconnect
 - translates `proxy_request` → `fetch('http://127.0.0.1:9507' + path)` → `proxy_response`
 - tunnels `ws_open` / `ws_message` / `ws_close` frames to/from local WebSockets

@@ -14,9 +14,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/ws": { target: "ws://localhost:9507", ws: true },
-      "/api": { target: "http://localhost:9507" },
-      "/apps": { target: "http://localhost:9507" }
+      "/ws": { target: "ws://localhost:9508", ws: true },
+      "/api": { target: "http://localhost:9508" },
+      "/apps": { target: "http://localhost:9508" }
     }
   },
   build: {

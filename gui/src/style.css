@@ -77,6 +77,15 @@
     --c-scroll:     var(--color-line-hi);
     --c-scroll-hov: var(--color-line-hi);
     --c-terminal-bg:var(--color-bg);
+
+    --bg:            var(--color-bg);
+    --surface:       var(--color-bg-elev);
+    --surface-hover: var(--color-bg-hi);
+    --surface-active:var(--color-bg-hi);
+    --border:        var(--color-line);
+    --text:          var(--color-ink);
+    --text-muted:    var(--color-muted);
+    --text-faint:    var(--color-faint);
 }
 
 html, body {
@@ -205,6 +214,126 @@ header, footer, section, button, [role="tab"] {
 .md table { border-collapse: collapse; font-size: .9em; margin: .5em 0; }
 .md th, .md td { border: 1px solid var(--color-line); padding: .3em .6em; }
 .md th { background: var(--color-bg-elev); }
+
+/* ================================================================
+   Roam app skin
+   Shared finish for imported apps. Component-level rewrites own the
+   main UX; this layer only normalizes typography and legacy inline UI.
+   ================================================================ */
+
+.roam-memory,
+.roam-notebook-list,
+.roam-notebook-editor,
+.roam-tasks,
+.roam-code-viewer,
+.cc-app-root {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+}
+
+.roam-memory *,
+.roam-notebook-list *,
+.roam-notebook-editor *,
+.roam-tasks *,
+.roam-code-viewer *,
+.cc-app-root * {
+    font-family: var(--font-sans) !important;
+    text-shadow: none !important;
+}
+
+.cc-app-root,
+.cc-app-root [style*="background:#faf6ec"],
+.cc-app-root [style*="background:#fff"],
+.cc-app-root [style*="background:#faf7f0"],
+.cc-app-root [style*="background:#fffaf2"],
+.cc-stat-card,
+.cc-chart-card,
+.cc-card,
+.cc-session-row {
+    background: var(--color-bg-elev) !important;
+    color: var(--color-ink) !important;
+    border-color: var(--color-line) !important;
+    box-shadow: none !important;
+}
+
+.cc-app-root [style*="#2a1f13"],
+.cc-app-root [style*="#3d2f1e"],
+.cc-app-root [style*="#4a3826"],
+.cc-app-root [style*="#6b5a46"],
+.cc-app-root [style*="#8a7965"],
+.cc-chart-title {
+    color: var(--color-ink) !important;
+}
+
+.cc-chart-sub,
+.cc-stat-sub,
+.cc-stat-label {
+    color: var(--color-muted) !important;
+}
+
+.cc-btn-primary,
+.cc-app-root [style*="background:#5c4332"] {
+    background: var(--color-accent) !important;
+    color: var(--color-bg) !important;
+    border-color: transparent !important;
+}
+
+.roam-tasks {
+    background: var(--color-bg) !important;
+}
+
+.roam-tasks [style*="#f7f4ef"],
+.roam-tasks [style*="rgba(247,244,239"],
+.roam-tasks [style*="rgba(238,232,222"],
+.roam-tasks [style*="background:#fff"],
+.roam-tasks [style*="rgba(255,255,255"],
+.roam-tasks [style*="rgba(140,100,60,0.08"] {
+    background: var(--color-bg-elev) !important;
+    border-color: var(--color-line) !important;
+}
+
+.roam-tasks [style*="#5c4332"] {
+    color: var(--color-accent-hi) !important;
+}
+
+.roam-tasks [style*="background:#5c4332"] {
+    background: var(--color-accent) !important;
+    color: var(--color-bg) !important;
+}
+
+.roam-tasks [style*="#2a1f13"],
+.roam-tasks [style*="#3d2f1e"],
+.roam-tasks [style*="rgba(0,0,0"] {
+    color: var(--color-ink) !important;
+}
+
+.roam-tasks [style*="rgba(120,80,40"],
+.roam-tasks [style*="rgba(0,0,0,0.35"] {
+    color: var(--color-muted) !important;
+}
+
+.roam-code-viewer {
+    background: var(--color-bg) !important;
+}
+
+.roam-code-viewer aside,
+.roam-code-viewer section > div:first-child,
+.roam-code-viewer [style*="#181818"],
+.roam-code-viewer [style*="#252526"],
+.roam-code-viewer [style*="#1e1e1e"] {
+    background: var(--color-bg-elev) !important;
+    border-color: var(--color-line) !important;
+}
+
+.cc-stat-value,
+.cc-mono,
+.cc-app-root pre,
+.cc-app-root code,
+.roam-code-viewer pre,
+.roam-code-viewer [class*="font-['SF_Mono"] {
+    font-family: var(--font-mono) !important;
+}
 
 /* ================================================================
    Compat layer — zinc/emerald/red/amber → semantic tokens

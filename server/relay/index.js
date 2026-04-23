@@ -12,13 +12,13 @@ try {
 const wsUrl    = fileConfig.wsUrl    || process.env.ROAM_RELAY_WS    || "";
 const token    = fileConfig.token    || process.env.ROAM_RELAY_TOKEN || "";
 const deviceId = fileConfig.deviceId || process.env.ROAM_DEVICE_ID   || "";
-const mainPort = Number(fileConfig.mainPort || process.env.ROAM_MAIN_PORT || 9507);
+const mainPort = Number(fileConfig.mainPort || process.env.ROAM_MAIN_PORT || 9508);
 const localHost = fileConfig.mainHost || process.env.ROAM_MAIN_HOST || "127.0.0.1";
 
-if (!wsUrl || !token || !deviceId) {
+if (!wsUrl || !deviceId) {
   console.error("[relay] config incomplete.");
-  console.error("  Fill in server/relay/config.js (wsUrl / token / deviceId)");
-  console.error("  or set ROAM_RELAY_WS / ROAM_RELAY_TOKEN / ROAM_DEVICE_ID env vars.");
+  console.error("  Fill in server/relay/config.js (wsUrl / deviceId)");
+  console.error("  or set ROAM_RELAY_WS / ROAM_DEVICE_ID env vars.");
   process.exit(1);
 }
 

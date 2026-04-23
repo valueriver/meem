@@ -6,6 +6,8 @@ import { handleFilesApi } from "./files.js";
 import { handleFsApi } from "./fs.js";
 import { handleTaskApi } from "./task.js";
 import { handleSystemApi } from "./system.js";
+import { getConnectionInfo } from "../system/connection.js";
+import { getRelayStatus } from "../service/system/relay.js";
 const handleApiRequest = async (req, res, url) => {
   const path = url.pathname;
   try {
@@ -14,7 +16,17 @@ const handleApiRequest = async (req, res, url) => {
       return true;
     }
     if (path === "/api/me") {
-      json(res, { authenticated: true, requiresPassword: false, locked: false, email: null, via: "localhost" });
+      const connection = getConnectionInfo(req);
+      const relay = await getRelayStatus();
+      json(res, {
+        authenticated: true,
+        requiresPassword: false,
+        locked: false,
+        email: null,
+        via: connection.via,
+        connection,
+        relay
+      });
       return true;
     }
     if (path === "/api/auth/challenge") {
