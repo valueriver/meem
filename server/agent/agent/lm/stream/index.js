@@ -1,11 +1,16 @@
 import { parseJson } from "../utils.js";
 import { buildLlmHeaders } from "../common.js";
+import { deepseekParser } from "./parsers/deepseek.js";
 import { geminiParser } from "./parsers/gemini.js";
 import { kimiParser } from "./parsers/kimi.js";
 import { openaiParser } from "./parsers/openai.js";
 
-const pickParser = (apiUrl) => {
+const pickParser = (apiUrl, model) => {
   const url = String(apiUrl || "");
+  const modelId = String(model || "").trim();
+  if (url.includes("api.deepseek.com") || modelId.startsWith("deepseek-")) {
+    return deepseekParser;
+  }
   if (url.includes("moonshot.cn") || url.includes("kimi.com")) {
     return kimiParser;
   }
@@ -16,7 +21,7 @@ const pickParser = (apiUrl) => {
 };
 
 const callLlmStream = async (apiUrl, apiKey, payload, { signal, onDelta } = {}) => {
-  const parser = pickParser(apiUrl);
+  const parser = pickParser(apiUrl, payload?.model);
   const state = parser.createState();
   const res = await fetch(apiUrl, {
     method: "POST",

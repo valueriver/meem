@@ -6,6 +6,7 @@ import {
   extractSummary,
   normalizeAgentMessages,
   normalizeChatOptions,
+  shouldReplayReasoning,
 } from "./utils.js";
 
 const chat = async (messages, {
@@ -19,7 +20,8 @@ const chat = async (messages, {
   toolResultMaxChars = 12000
 } = {}) => {
   const opts = normalizeChatOptions({ maxRounds, enableToolResultTruncate, toolResultMaxChars });
-  const workMessages = normalizeAgentMessages(messages);
+  const workMessages = normalizeAgentMessages(messages, { model, apiUrl });
+  const replayReasoning = shouldReplayReasoning(model, apiUrl);
   let round = 0;
 
   while (round++ < opts.maxRounds) {
@@ -72,6 +74,13 @@ const chat = async (messages, {
       ...(summary ? { summary } : {}),
       ...(message.usage ? { usage: message.usage } : {})
     };
+    if (
+      replayReasoning &&
+      typeof message.reasoning_content === "string" &&
+      message.reasoning_content.trim()
+    ) {
+      replyMsg.reasoning_content = message.reasoning_content;
+    }
     workMessages.push(replyMsg);
     onEvent({ type: "done", message: replyMsg, text, usage: message.usage });
     return { text, messages: workMessages };

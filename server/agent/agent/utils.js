@@ -31,10 +31,17 @@ const normalizeChatOptions = (options = {}) => {
   };
 };
 
-const normalizeAgentMessages = (messages = []) => {
+const shouldReplayReasoning = (model, apiUrl) => {
+  const modelId = String(model || "").trim();
+  const url = String(apiUrl || "").trim();
+  return modelId.startsWith("deepseek-") || url.includes("api.deepseek.com");
+};
+
+const normalizeAgentMessages = (messages = [], { model, apiUrl } = {}) => {
   if (!Array.isArray(messages)) return [];
   const validRoles = new Set(["system", "user", "assistant", "tool"]);
   const normalized = [];
+  const replayReasoning = shouldReplayReasoning(model, apiUrl);
 
   for (const item of messages) {
     if (!item || typeof item !== "object") continue;
@@ -44,11 +51,23 @@ const normalizeAgentMessages = (messages = []) => {
     if (role === "assistant" && Array.isArray(item.tool_calls)) {
       msg.content = item.content == null ? null : String(item.content);
       msg.tool_calls = item.tool_calls;
-      if (typeof item.reasoning_content === "string" && item.reasoning_content.trim()) {
+      if (
+        replayReasoning &&
+        typeof item.reasoning_content === "string" &&
+        item.reasoning_content.trim()
+      ) {
         msg.reasoning_content = item.reasoning_content;
       }
     } else {
       msg.content = item.content == null ? "" : String(item.content);
+      if (
+        replayReasoning &&
+        role === "assistant" &&
+        typeof item.reasoning_content === "string" &&
+        item.reasoning_content.trim()
+      ) {
+        msg.reasoning_content = item.reasoning_content;
+      }
     }
     if (role === "tool" && item.tool_call_id) {
       msg.tool_call_id = String(item.tool_call_id);
@@ -111,5 +130,6 @@ export {
   extractSummary,
   normalizeAgentMessages,
   normalizeChatOptions,
+  shouldReplayReasoning,
   truncateToolResult,
 };
