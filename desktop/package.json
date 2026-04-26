@@ -1,7 +1,7 @@
 {
-  "name": "roam-desktop",
+  "name": "meem-desktop",
   "version": "0.1.0",
-  "description": "Desktop client for Roam · 漫游",
+  "description": "Desktop client for Meem · 漫游",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

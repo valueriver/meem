@@ -293,7 +293,7 @@ watch(
                     <div>
                         <div class="font-serif font-bold text-[15px] tracking-tight text-ink">Agent 设置</div>
                         <div class="mt-1 text-[11px] text-faint">
-                            模型参数保存到桌面端 ~/.roam/roam.db，重启也在。
+                            模型参数保存到桌面端 ~/.meem/meem.db，重启也在。
                         </div>
                     </div>
                     <button class="h-8 w-8 rounded-md flex items-center justify-center bg-bg-hi text-muted hover:opacity-80"

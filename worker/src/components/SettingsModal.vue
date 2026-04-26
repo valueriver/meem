@@ -17,7 +17,7 @@ const settings = useSettingsStore();
                 <div>
                     <div class="font-serif font-bold text-[16px] tracking-tight"
                         style="color: var(--color-ink);">设置</div>
-                    <div class="text-[11px] mt-0.5" style="color: var(--color-faint);">Roam · 漫游</div>
+                    <div class="text-[11px] mt-0.5" style="color: var(--color-faint);">Meem · 漫游</div>
                 </div>
                 <button @click="settings.closeSettings"
                     class="w-8 h-8 flex items-center justify-center rounded-md transition-colors"
@@ -68,7 +68,7 @@ const settings = useSettingsStore();
                 style="border-color: var(--color-line);">
                 <div class="text-[10px] font-mono tracking-[0.3em]"
                     style="color: var(--color-faint);">
-                    ROAM · REMOTE ACCESS
+                    MEEM · REMOTE ACCESS
                 </div>
             </div>
         </div>

@@ -46,7 +46,7 @@ async function handle(message) {
     }
 }
 
-// 暴露给 app.js / guard grant 使用的快照接口
+// 暴露给 index.js / guard grant 使用的快照接口
 function sendSnapshotTo(clientId) {
     sessions.broadcastList(`web:${clientId}`);
     const active = sessions.get();

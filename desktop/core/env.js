@@ -21,19 +21,19 @@ const path = require('path');
     }
 })();
 
-const ROAM_URL = process.env.ROAM_URL;
-if (!ROAM_URL) {
-    console.error('❌ 未设置 ROAM_URL');
+const MEEM_URL = process.env.MEEM_URL;
+if (!MEEM_URL) {
+    console.error('❌ 未设置 MEEM_URL');
     console.error('   · 在 desktop/ 下创建 .env（参考 .env.example）');
-    console.error('   · 或命令行传入：ROAM_URL=https://roam.xxx.workers.dev npm start');
+    console.error('   · 或命令行传入：MEEM_URL=https://meem.xxx.workers.dev npm start');
     process.exit(1);
 }
 
 let parsed;
 try {
-    parsed = new URL(ROAM_URL);
+    parsed = new URL(MEEM_URL);
 } catch {
-    console.error(`❌ ROAM_URL 不是合法的 URL: ${ROAM_URL}`);
+    console.error(`❌ MEEM_URL 不是合法的 URL: ${MEEM_URL}`);
     process.exit(1);
 }
 
@@ -41,10 +41,10 @@ const SERVER_URL = `${parsed.protocol === 'https:' ? 'wss:' : 'ws:'}//${parsed.h
 const WEB_URL = parsed.origin;
 const SESSION_PASSWORD = String(process.env.SESSION_PASSWORD || '').trim();
 const BROWSER_CHANNEL = process.env.BROWSER_CHANNEL || 'chrome';
-const DEBUG = process.env.ROAM_DEBUG === '1';
+const DEBUG = process.env.MEEM_DEBUG === '1';
 
 module.exports = {
-    ROAM_URL,
+    MEEM_URL,
     SERVER_URL,
     WEB_URL,
     SESSION_PASSWORD,

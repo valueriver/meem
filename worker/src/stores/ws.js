@@ -20,7 +20,7 @@ export const useWsStore = defineStore('ws', () => {
     let challengeNonce = '';
     let lastChallengeReqAt = 0;
 
-    function tokenKey() { return `roam_auth_${sessionId.value || ''}`; }
+    function tokenKey() { return `meem_auth_${sessionId.value || ''}`; }
     function readToken() {
         try { return localStorage.getItem(tokenKey()) || ''; } catch { return ''; }
     }

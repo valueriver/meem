@@ -3,8 +3,8 @@ const os = require('os');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 
-const DB_DIR = path.join(os.homedir(), '.roam');
-const DB_PATH = path.join(DB_DIR, 'roam.db');
+const DB_DIR = path.join(os.homedir(), '.meem');
+const DB_PATH = path.join(DB_DIR, 'meem.db');
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS settings (

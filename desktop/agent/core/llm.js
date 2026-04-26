@@ -4,8 +4,8 @@ function buildHeaders(apiKey, apiUrl) {
         Authorization: `Bearer ${apiKey}`,
     };
     if (String(apiUrl || '').includes('openrouter.ai')) {
-        headers['HTTP-Referer'] = 'https://roam.local';
-        headers['X-Title'] = 'roam';
+        headers['HTTP-Referer'] = 'https://meem.local';
+        headers['X-Title'] = 'meem';
     }
     return headers;
 }

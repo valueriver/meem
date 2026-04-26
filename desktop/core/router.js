@@ -5,7 +5,7 @@ const files = require('../files');
 const agent = require('../agent');
 const screen = require('../screen');
 
-// onDevicesChanged 由 app.js 注入（web 上线时推各 feature 的初始快照）
+// onDevicesChanged 由 index.js 注入（web 上线时推各 feature 的初始快照）
 let onDevicesChanged = () => {};
 
 function bindOnDevicesChanged(fn) {

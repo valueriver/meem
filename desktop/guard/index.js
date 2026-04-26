@@ -4,7 +4,7 @@ const nonces = require('./core/nonces');
 const challenge = require('./commands/challenge');
 const submit = require('./commands/submit');
 
-// onGrant 由 app.js 注入：发 auth.grant + 推各 feature 的初始快照
+// onGrant 由 index.js 注入：发 auth.grant + 推各 feature 的初始快照
 let onGrant = () => {};
 
 function sendAuthMode() {
