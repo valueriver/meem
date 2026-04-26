@@ -20,6 +20,11 @@ const routes = [
         component: () => import('./views/FilesView.vue'),
     },
     {
+        path: '/screen',
+        name: 'screen',
+        component: () => import('./views/ScreenView.vue'),
+    },
+    {
         path: '/agent',
         name: 'agent',
         component: () => import('./views/AgentView.vue'),

@@ -15,7 +15,7 @@
 
 **忘掉 SSH。忘掉 VPN。忘掉端口转发。**
 
-🖥️ 终端 · 📂 文件 · 🤖 Agent · 🌐 浏览器 —— 在任何设备的浏览器里直接用回你自己电脑
+🖥️ 终端 · 📂 文件 · 🖼️ 屏幕 · 🤖 Agent · 🌐 浏览器 —— 在任何设备的浏览器里直接用回你自己电脑
 
 </div>
 
@@ -24,7 +24,7 @@
 ## 📸 长什么样
 
 > 想象一下:在公司、咖啡馆、iPad 上点开一条链接,登进去就是你家那台电脑。
-> 多标签终端、文件管理、AI agent、Playwright 浏览器,**就像没出过门**。
+> 多标签终端、文件管理、屏幕截图查看、AI agent、Playwright 浏览器,**就像没出过门**。
 
 ---
 
@@ -32,6 +32,7 @@
 
 - 🖥️ **完整终端** —— 多标签、xterm 全功能、触屏友好,远程连上像坐在电脑前
 - 📂 **文件管理** —— 列表、预览(文本+图片)、上传/下载、重命名、搜索、排序
+- 🖼️ **屏幕查看** —— 手动刷新桌面截图,只看不控,适合远程确认当前电脑状态
 - 🤖 **AI Agent** —— OpenAI 兼容接口即用,内置 `terminal_exec` / `fs_*` / `browser_run_code` 工具
 - 🌐 **浏览器操控** —— Agent 可开本机 Chrome 跑 Playwright 代码
 - 🔐 **认证硬核** —— HMAC-SHA256 challenge/response(密码不出浏览器)+ 30 天 token + 暴力锁定 + 单设备独占
@@ -47,10 +48,10 @@ Cloudflare Workers · Durable Objects · WebSocket Hibernation · Vue 3 · Vite 
 
 ```
  ┌──────────┐   WSS    ┌───────────────────────┐   WSS   ┌──────────┐
- │ 浏览器    │────────▶│ Cloudflare Worker      │◀────────│ 桌面端    │
- │  Vue 3   │          │  · DO + Hibernation    │         │  Node   │
- │  xterm   │◀────────│  · 单设备独占 / 锁定     │────────▶│ node-pty │
- └──────────┘          └───────────────────────┘          │Playwright│
+│ 浏览器    │────────▶│ Cloudflare Worker      │◀────────│ 桌面端    │
+│  Vue 3   │          │  · DO + Hibernation    │         │  Node   │
+│ xterm/img│◀────────│  · 单设备独占 / 锁定     │────────▶│ node-pty │
+└──────────┘          └───────────────────────┘          │screenshot│
                                                          └──────────┘
 ```
 
@@ -99,14 +100,34 @@ npm start
 
 空态会有表单,填 OpenAI 兼容接口的 `API URL` / `API Key` / `Model`,保存即可。配置写到 `~/.roam/roam.db`,下次启动还在。
 
+### 4️⃣ 打开各功能页
+
+- `/terminal` —— 多标签远程 shell
+- `/files` —— 文件浏览、预览、上传、下载、重命名、删除
+- `/screen` —— 获取当前桌面截图,页面只显示图片,不会发送鼠标或键盘事件
+- `/agent` —— AI agent 会话和模型配置
+
+macOS 第一次使用 `/screen` 时,系统可能要求给启动 `npm start` 的终端或 Node 授予“屏幕录制”权限。授权后通常需要重启桌面端进程。
+
 ## 🔐 安全模型
 
 - **密码** HMAC-SHA256 challenge/response —— 原文**不出浏览器**,后端 `timingSafeEqual` 比对
 - **token** 成功后颁发 30 天免登录 token,存 localStorage,下次 WS 自动放行
 - **暴力防护** 累计 10 次失败 → 全局锁 30 分钟 + 清空所有 token
 - **独占** 新设备认证通过 → Worker 主动 `ws.close(4001)` 顶替旧会话
+- **屏幕只读** `/screen` 只按需返回一张 PNG 截图,没有远程点击、键盘输入或连续推流
 
 进门后所有消息明文 over WSS —— TLS 到 CF 边缘,再 TLS 到你桌面端。CF 内部理论可见,信不信看你对 Cloudflare 的信任度。
+
+## 🧭 功能边界
+
+Roam 的核心思路是“浏览器只是遥控台,真实能力都在桌面端”:
+
+- 终端命令由桌面端 `node-pty` 执行
+- 文件读写由桌面端 Node 进程访问本机文件系统
+- 屏幕截图由桌面端调用系统截图能力后返回 PNG
+- Agent 工具最终也落到桌面端的终端、文件和浏览器能力
+- Worker 只负责配对、认证状态和 WebSocket 消息转发,不保存你的文件、终端输出或 Agent 数据
 
 ## 📁 项目结构
 
@@ -119,10 +140,38 @@ roam/
     ├── guard/      #   认证(challenge/submit/lockout)
     ├── terminal/   #   pty 终端
     ├── files/      #   文件管理
+    ├── screen/     #   屏幕截图查看(只读)
     └── agent/      #   AI agent + 工具(shell / browser)
 ```
 
 按 feature 划分,每个目录自闭合:`index.js` 出 `handle(msg)`、`core/` 存模块状态、`commands/` 存动作。
+
+## 🧪 本地开发
+
+前端/Worker:
+
+```bash
+cd worker
+npm install
+npm run dev:web     # 只跑 Vite 前端
+npm run build       # 构建静态资源到 worker/public
+npm run deploy      # 构建并部署 Worker
+```
+
+桌面端:
+
+```bash
+cd desktop
+npm install
+ROAM_URL=https://你的-worker-地址 npm start
+```
+
+常用检查:
+
+```bash
+cd worker && npm run build
+cd ../desktop && ROAM_URL=http://localhost:8787 node -e "require('./screen'); require('./core/router')"
+```
 
 ## 💰 成本
 

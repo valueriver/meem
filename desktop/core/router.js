@@ -3,6 +3,7 @@ const guard = require('../guard');
 const terminal = require('../terminal');
 const files = require('../files');
 const agent = require('../agent');
+const screen = require('../screen');
 
 // onDevicesChanged 由 app.js 注入（web 上线时推各 feature 的初始快照）
 let onDevicesChanged = () => {};
@@ -34,6 +35,9 @@ async function dispatch(message) {
     }
     if (t.startsWith('fs.')) {
         if (await files.handle(message)) return;
+    }
+    if (t.startsWith('screen.')) {
+        if (await screen.handle(message)) return;
     }
     if (t.startsWith('agent.')) {
         if (await agent.handle(message)) return;
