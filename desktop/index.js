@@ -30,7 +30,6 @@ async function boot() {
     });
 
     // 桌面端启动就开一个默认终端，让用户打开就有东西用
-    console.log('🌿 Meem 启动中...');
     await terminal.ensureDefault();
 
     ws.init({

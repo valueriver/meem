@@ -27,17 +27,13 @@ function broadcast(type, data) {
 
 function connect() {
     const url = `${SERVER_URL}/ws?session=${state.sessionId}&device=desktop`;
-    console.log(`连接服务器: ${url}`);
     state.ws = new WebSocket(url);
 
     state.ws.on('open', () => {
-        console.log('✅ 已连接到服务器');
         const webUrl = `${WEB_URL}/guard?session=${state.sessionId}`;
         console.log('🔗 访问链接:');
         console.log(`   ${webUrl}`);
         if (SESSION_PASSWORD) console.log(`🔐 访问密码: ${SESSION_PASSWORD}`);
-        console.log('');
-        console.log('💡 在手机或其他设备的浏览器中打开上述链接即可使用');
         state.onOpen?.();
     });
 
